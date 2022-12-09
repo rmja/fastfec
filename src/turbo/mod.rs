@@ -5,7 +5,7 @@ mod symbol;
 
 pub use code::TurboCode;
 pub use decoder::TurboDecoder;
-pub use encoder::TurboEncoder;
+pub use encoder::{TurboEncoder, TurboEncoderOutputWriter};
 pub use symbol::TurboSymbol;
 
 pub mod umts {
