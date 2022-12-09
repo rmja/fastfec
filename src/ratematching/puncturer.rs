@@ -16,6 +16,7 @@ impl Puncturer {
     /// # Examples
     /// Pattern 0b0010 (width: 4) will puncture bit 1 and output bit 0, 2 and 3.
     pub const fn new(width: usize, pattern: usize) -> Self {
+        assert!(width > 0);
         Self {
             state: pattern,
             width,
