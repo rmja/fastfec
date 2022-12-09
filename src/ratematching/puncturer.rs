@@ -24,10 +24,6 @@ impl Puncturer {
 
     /// Get whether a bit should be output, i.e. not punctured.
     pub fn read_output(&mut self) -> bool {
-        if self.width == 0 {
-            return true;
-        }
-
         let output = self.state & 1;
         self.state >>= 1;
         self.state |= output << (self.width - 1);
@@ -38,7 +34,7 @@ impl Puncturer {
 impl Default for Puncturer {
     /// Create a default puncturer that does not puncture.
     fn default() -> Self {
-        Self { state: 0, width: 0 }
+        Self { state: 0, width: 1 }
     }
 }
 
