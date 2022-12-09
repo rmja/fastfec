@@ -1,5 +1,4 @@
-use core::simd::{i8x8, SimdOrd};
-use std::simd::SimdInt;
+use core::simd::{i8x8, SimdOrd, SimdInt};
 
 use crate::Llr;
 

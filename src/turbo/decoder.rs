@@ -1,7 +1,9 @@
-use std::marker::PhantomData;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
 
 use crate::{
-    convolutional::bcjr::{umts::UmtsState, BcjrDecoder, BcjrSymbol, BcjrState},
+    convolutional::bcjr::{umts::UmtsState, BcjrDecoder, BcjrState, BcjrSymbol},
     interleaver::{Interleaver, InterleaverMapping},
     Llr,
 };

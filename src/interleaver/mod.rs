@@ -1,4 +1,5 @@
-use std::ops::Deref;
+use core::ops::Deref;
+use alloc::vec;
 
 pub mod qpp;
 pub mod umts;

@@ -1,4 +1,5 @@
 use core::marker::PhantomData;
+use alloc::vec::Vec;
 
 use crate::{convolutional::ConvolutionalCode, Llr};
 

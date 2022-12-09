@@ -1,4 +1,7 @@
+#![cfg_attr(not(test), no_std)]
 #![feature(portable_simd)]
+
+extern crate alloc;
 
 pub mod catalog;
 pub mod convolutional;
