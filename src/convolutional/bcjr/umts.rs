@@ -20,6 +20,12 @@ struct Value {
     s30: u32,
 }
 
+impl Default for UmtsState {
+    fn default() -> Self {
+        Self::new(0, 0)
+    }
+}
+
 impl UmtsState {
     const fn new(s74: u32, s30: u32) -> Self {
         Self {
@@ -85,12 +91,6 @@ impl UmtsState {
         Self {
             simd: i8x8::splat(coeff),
         }
-    }
-}
-
-impl Default for UmtsState {
-    fn default() -> Self {
-        Self::new(0, 0)
     }
 }
 

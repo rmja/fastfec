@@ -12,17 +12,24 @@ pub struct TurboEncoder {
 pub trait TurboEncoderOutputWriter {
     /// Write output bits.
     ///
+    /// Bit 0 corresponds to the systematic bit,
+    /// bit 1 to the output of the first constituent encoder, and
+    /// bit 2 to the output of the second constituent encoder.
+    ///
     /// # Arguments
     ///
-    /// * `output` - The encoder output. Bit 0 corresponds to systematic bit, bit 1 to the output of the first constituent encoder and bit 2 to the output of the second constituent encoder.
+    /// * `output` - The encoder output.
     fn write_output(&mut self, output: EncoderOutput);
 
     /// Write termination bits.
     ///
+    /// Bit 0 corresponds to the termination input and
+    /// bit 1 to the corresponding parity output.
+    ///
     /// # Arguments
     ///
     /// * `encoder_index` - The index of the constituent encoder for which the termination is generated.
-    /// * `output` - The termination output. Bit 0 corresponds to the termination input and bit 1 to the corresponding parity output.
+    /// * `output` - The termination output.
     fn write_termination_output(&mut self, encoder_index: usize, output: EncoderOutput);
 }
 
