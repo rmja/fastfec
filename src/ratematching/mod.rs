@@ -1,1 +1,3 @@
-pub mod puncturing;
+mod puncturer;
+
+pub use puncturer::Puncturer;
