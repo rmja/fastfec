@@ -102,7 +102,7 @@ impl ConvolutionalCode {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     #[test]
     fn abrantes() {
         // Given

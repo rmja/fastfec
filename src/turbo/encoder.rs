@@ -67,7 +67,7 @@ impl TurboEncoder {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use crate::{convolutional::EncoderOutput, interleaver::qpp::QppInterleaver};
 
     use super::*;

@@ -302,7 +302,7 @@ impl BcjrState for UmtsState {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use crate::{catalog, convolutional::bcjr::BcjrSymbol};
 
     use super::*;

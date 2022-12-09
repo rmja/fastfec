@@ -203,7 +203,7 @@ pub const fn create(length: usize) -> Option<QppInterleaver> {
 
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use crate::interleaver::Interleaver;
 
     use super::*;

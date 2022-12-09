@@ -145,7 +145,7 @@ where
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use crate::interleaver::qpp::QppInterleaver;
 
     use super::*;

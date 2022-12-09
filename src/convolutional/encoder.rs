@@ -32,13 +32,13 @@ impl ConvolutionalEncoder {
 }
 
 #[cfg(test)]
-// #[cfg_attr(rustfmt, rustfmt_skip)]
-pub mod tests {
+mod tests {
     use crate::convolutional::EncoderOutput;
 
     use super::ConvolutionalEncoder;
 
     #[test]
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     fn can_encode_umts() {
         can_encode_umts_case(
             &[
