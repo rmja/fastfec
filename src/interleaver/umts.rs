@@ -197,10 +197,9 @@ pub const fn create(length: usize) -> Option<QppInterleaver> {
         6016 => Some(QppInterleaver::new(6016, 23, 94)),
         6080 => Some(QppInterleaver::new(6080, 47, 190)),
         6144 => Some(QppInterleaver::new(6144, 263, 480)),
-        _ => None
+        _ => None,
     }
 }
-
 
 #[cfg(test)]
 mod tests {

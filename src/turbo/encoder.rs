@@ -73,6 +73,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     fn can_encode() {
         can_encode_case(&[
             // 0bCBA

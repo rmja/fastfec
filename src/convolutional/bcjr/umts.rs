@@ -1,4 +1,4 @@
-use core::simd::{i8x8, SimdOrd, SimdInt};
+use core::simd::{i8x8, SimdInt, SimdOrd};
 
 use crate::Llr;
 

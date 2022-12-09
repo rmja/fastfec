@@ -1,6 +1,6 @@
+pub mod bcjr;
 mod code;
 mod encoder;
-pub mod bcjr;
 
 pub use code::ConvolutionalCode;
 pub use encoder::ConvolutionalEncoder;

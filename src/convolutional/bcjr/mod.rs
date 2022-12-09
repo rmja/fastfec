@@ -1,6 +1,6 @@
-mod symbol;
 mod decoder;
+mod symbol;
 pub mod umts;
 
-pub use symbol::BcjrSymbol;
 pub use decoder::{BcjrDecoder, BcjrState};
+pub use symbol::BcjrSymbol;
