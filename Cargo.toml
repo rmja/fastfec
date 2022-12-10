@@ -9,10 +9,11 @@ license = "MIT OR Apache-2.0"
 keywords = [
     "fec",
     "convolutional-code",
-    "turbo-code"
+    "turbo-code",
 ]
 description = """
 Fast implmentations of various forward error correction algorithms optimized for embedded systems.
 """
 
 [dependencies]
+bitvec = { version = "1", default-features = false }

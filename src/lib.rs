@@ -8,6 +8,7 @@ pub mod convolutional;
 pub mod interleaver;
 pub mod ratematching;
 pub mod turbo;
+mod bitview;
 
 pub type Llr = i8;
 
@@ -18,3 +19,5 @@ pub struct CodeRate {
     /// The code rate denominator
     pub n: u8,
 }
+
+pub use bitview::BitView;
