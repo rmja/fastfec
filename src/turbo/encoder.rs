@@ -85,6 +85,7 @@ mod tests {
     #[test]
     fn can_encode_from_boolslice() {
         let input = [false; 8].as_ref();
+        
         let encoder = TurboEncoder::new(crate::catalog::UMTS);
         let interleaver = QppInterleaver::new(input.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
@@ -95,6 +96,7 @@ mod tests {
     #[test]
     fn can_encode_from_fixedboolslice() {
         let input = [false; 8];
+
         let encoder = TurboEncoder::new(crate::catalog::UMTS);
         let interleaver = QppInterleaver::new(input.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
@@ -106,6 +108,8 @@ mod tests {
     fn can_encode_from_bitslice() {
         let input = &[0x00u8];
         let bitslice = input.view_bits::<Msb0>();
+        assert_eq!(8, bitslice.len());
+
         let encoder = TurboEncoder::new(crate::catalog::UMTS);
         let interleaver = QppInterleaver::new(bitslice.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
