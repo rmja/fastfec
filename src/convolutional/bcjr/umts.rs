@@ -277,8 +277,7 @@ impl BcjrState for UmtsState {
 
     fn get_all_scaled(self) -> Self {
         let coefficients = Self::get_scale_coefficients(self, 8);
-        let scaled = Self::simd_saturating_sub(self, coefficients);
-        scaled
+        Self::simd_saturating_sub(self, coefficients)
     }
 
     fn get_valid_scaled(self, index: usize, symbol_count: usize) -> Self {
@@ -292,11 +291,10 @@ impl BcjrState for UmtsState {
 
         let coefficients = Self::get_scale_coefficients(masked, valid_state_count);
         let scaled = Self::simd_saturating_sub(masked, coefficients).split();
-        let invalidated = Self::new(
+        Self::new(
             (scaled.s74 & mask.s74) | (UNREACHABLE & !mask.s74),
             (scaled.s30 & mask.s30) | (UNREACHABLE & !mask.s30),
-        );
-        invalidated
+        )
     }
 }
 

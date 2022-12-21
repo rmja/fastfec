@@ -55,6 +55,7 @@ where
             let g1p0 = la as i32 + lu as i32;
             let g1p1 = g0p1 + g1p0;
 
+            #[allow(clippy::identity_op)]
             let g = (0 << 0)
                 | ((g0p1.clamp(i8::MIN as i32, i8::MAX as i32) as u8 as u32) << 8)
                 | ((g1p0.clamp(i8::MIN as i32, i8::MAX as i32) as u8 as u32) << 16)
@@ -74,7 +75,7 @@ where
         let mut a = S::default();
         a = a.get_valid_scaled(index, symbol_count);
         alpha.push(a);
-        index = index + 1;
+        index += 1;
 
         while index < self.code.mem() {
             let g = gamma[index - 1];

@@ -29,8 +29,8 @@ impl<S: BcjrState> TurboDecoder<S> {
         self.code
     }
 
-    pub fn decode<'a, I: Interleaver>(
-        &'a self,
+    pub fn decode<I: Interleaver>(
+        &self,
         input: &[TurboSymbol],
         interleaver: I,
         first_termination: &[BcjrSymbol],
@@ -41,7 +41,7 @@ impl<S: BcjrState> TurboDecoder<S> {
         for symbol in input {
             first_input.push(BcjrSymbol::new(symbol.systematic, symbol.first_parity))
         }
-        first_input.extend_from_slice(&first_termination);
+        first_input.extend_from_slice(first_termination);
 
         // Prepare input for the second decoder
         let mut second_input = Vec::with_capacity(input.len() + second_termination.len());
@@ -51,7 +51,7 @@ impl<S: BcjrState> TurboDecoder<S> {
                 input[i].second_parity,
             ));
         }
-        second_input.extend_from_slice(&second_termination);
+        second_input.extend_from_slice(second_termination);
 
         // Create a result buffer that the individual decoders can use
         let bcjr_result =

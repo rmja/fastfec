@@ -5,6 +5,7 @@ pub mod qpp;
 pub mod umts;
 
 /// The interleaver.
+#[allow(clippy::len_without_is_empty)]
 pub trait Interleaver: IntoIterator<Item = InterleaverMapping> + Copy {
     /// The interleaver length.
     fn len(&self) -> usize;

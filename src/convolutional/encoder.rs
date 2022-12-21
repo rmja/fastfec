@@ -38,7 +38,7 @@ mod tests {
     use super::ConvolutionalEncoder;
 
     #[test]
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     fn can_encode_umts() {
         can_encode_umts_case(
             &[

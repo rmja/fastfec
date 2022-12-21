@@ -92,7 +92,7 @@ impl ConvolutionalCode {
 
         // Get the individual output for each generator and append to the final output
         for poly in self.generators {
-            let sum = feedback_sum + (current & poly).count_ones() as usize & 1;
+            let sum = (feedback_sum + (current & poly).count_ones() as usize) & 1;
             output |= sum * mask;
             mask <<= 1;
         }
