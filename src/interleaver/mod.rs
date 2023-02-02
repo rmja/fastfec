@@ -7,6 +7,11 @@ pub mod umts;
 /// The interleaver.
 #[allow(clippy::len_without_is_empty)]
 pub trait Interleaver: IntoIterator<Item = InterleaverMapping> + Copy {
+    /// Get the interleaved index.
+    /// It is slower to call this function `k` times than iterating the entire
+    /// permuted sequence.
+    fn get(&self, i: usize) -> usize;
+
     /// The interleaver length.
     fn len(&self) -> usize;
 

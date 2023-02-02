@@ -22,18 +22,6 @@ impl QppInterleaver {
         Self { length, f1, f2 }
     }
 
-    /// Get the interleaved index.
-    /// It is slower to call this function `k` times than iterating the entire
-    /// permuted sequence.
-    pub fn pi(&self, i: usize) -> usize {
-        let i = u64::try_from(i).unwrap();
-        let f1 = u64::try_from(self.f1).unwrap();
-        let f2 = u64::try_from(self.f2).unwrap();
-        let length = u64::try_from(self.length).unwrap();
-
-        ((f1 * i + f2 * i * i) % length).try_into().unwrap()
-    }
-
     /// Get an iterator that produces the permuted sequence.
     /// It produces `k` permutations and is faster than invoking `pi` `k` times.
     pub fn iter(&self) -> QppIterator {
@@ -48,6 +36,18 @@ impl QppInterleaver {
 }
 
 impl Interleaver for QppInterleaver {
+    /// Get the interleaved index.
+    /// It is slower to call this function `k` times than iterating the entire
+    /// permuted sequence.
+    fn get(&self, i: usize) -> usize {
+        let i = u64::try_from(i).unwrap();
+        let f1 = u64::try_from(self.f1).unwrap();
+        let f2 = u64::try_from(self.f2).unwrap();
+        let length = u64::try_from(self.length).unwrap();
+
+        ((f1 * i + f2 * i * i) % length).try_into().unwrap()
+    }
+
     fn len(&self) -> usize {
         self.length
     }

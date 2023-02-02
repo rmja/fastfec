@@ -224,7 +224,7 @@ mod tests {
         // When
         for i in interleaver {
             interleaved.insert(*i);
-            assert_eq!(interleaver.pi(i.0), i.1);
+            assert_eq!(interleaver.get(i.0), i.1);
         }
 
         // Then
