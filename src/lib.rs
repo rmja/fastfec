@@ -1,14 +1,16 @@
 #![cfg_attr(not(test), no_std)]
+#![allow(incomplete_features)]
 #![feature(portable_simd)]
+#![feature(return_position_impl_trait_in_trait)]
 
 extern crate alloc;
 
+mod bitview;
 pub mod catalog;
 pub mod convolutional;
 pub mod interleaver;
 pub mod ratematching;
 pub mod turbo;
-mod bitview;
 
 pub type Llr = i8;
 

@@ -17,28 +17,17 @@ pub struct QppInterleaver {
 }
 
 impl QppInterleaver {
-    /// Create a new interleaver.
+    /// Create a new interleaver
     pub const fn new(length: usize, f1: u16, f2: u16) -> Self {
         Self { length, f1, f2 }
-    }
-
-    /// Get an iterator that produces the permuted sequence.
-    /// It produces `k` permutations and is faster than invoking `pi` `k` times.
-    pub fn iter(&self) -> QppIterator {
-        QppIterator {
-            length: self.length,
-            incr: (2 * self.f2 as usize) % self.length,
-            pi: 0,
-            g: (self.f1 as usize + self.f2 as usize) % self.length,
-            i: 0,
-        }
     }
 }
 
 impl Interleaver for QppInterleaver {
-    /// Get the interleaved index.
-    /// It is slower to call this function `k` times than iterating the entire
-    /// permuted sequence.
+    fn len(&self) -> usize {
+        self.length
+    }
+
     fn get(&self, i: usize) -> usize {
         let i = u64::try_from(i).unwrap();
         let f1 = u64::try_from(self.f1).unwrap();
@@ -48,18 +37,14 @@ impl Interleaver for QppInterleaver {
         ((f1 * i + f2 * i * i) % length).try_into().unwrap()
     }
 
-    fn len(&self) -> usize {
-        self.length
-    }
-}
-
-impl IntoIterator for QppInterleaver {
-    type Item = InterleaverMapping;
-
-    type IntoIter = QppIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
+    fn iter(&self) -> impl Iterator<Item = InterleaverMapping> {
+        QppIterator {
+            length: self.length,
+            incr: (2 * self.f2 as usize) % self.length,
+            pi: 0,
+            g: (self.f1 as usize + self.f2 as usize) % self.length,
+            i: 0,
+        }
     }
 }
 

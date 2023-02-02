@@ -6,14 +6,18 @@ pub mod umts;
 
 /// The interleaver.
 #[allow(clippy::len_without_is_empty)]
-pub trait Interleaver: IntoIterator<Item = InterleaverMapping> + Copy {
+pub trait Interleaver {
+    /// The interleaver length.
+    fn len(&self) -> usize;
+
     /// Get the interleaved index.
     /// It is slower to call this function `k` times than iterating the entire
     /// permuted sequence.
     fn get(&self, i: usize) -> usize;
 
-    /// The interleaver length.
-    fn len(&self) -> usize;
+    /// Get an iterator that produces the permuted sequence.
+    /// It produces `k` permutations and is faster than invoking `pi` `k` times.
+    fn iter(&self) -> impl Iterator<Item = InterleaverMapping>;
 
     /// Interleave a buffer in place.
     fn interleave<T: Copy + Default + Sized>(&self, buffer: &mut [T]) {
@@ -21,7 +25,7 @@ pub trait Interleaver: IntoIterator<Item = InterleaverMapping> + Copy {
 
         let mut interleaved = vec![T::default(); buffer.len()];
 
-        for InterleaverMapping(i, ii) in self.into_iter() {
+        for InterleaverMapping(i, ii) in self.iter() {
             interleaved[i] = buffer[ii];
         }
 
@@ -34,7 +38,7 @@ pub trait Interleaver: IntoIterator<Item = InterleaverMapping> + Copy {
 
         let mut deinterleaved = vec![T::default(); buffer.len()];
 
-        for InterleaverMapping(i, ii) in self.into_iter() {
+        for InterleaverMapping(i, ii) in self.iter() {
             deinterleaved[ii] = buffer[i];
         }
 
@@ -43,6 +47,7 @@ pub trait Interleaver: IntoIterator<Item = InterleaverMapping> + Copy {
 }
 
 /// Interleaver mapping.
+#[derive(Clone, Copy)]
 pub struct InterleaverMapping(
     /// The original index
     pub usize,

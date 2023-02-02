@@ -222,7 +222,7 @@ mod tests {
         let mut interleaved = HashSet::with_capacity(interleaver.len());
 
         // When
-        for i in interleaver {
+        for i in interleaver.iter() {
             interleaved.insert(*i);
             assert_eq!(interleaver.get(i.0), i.1);
         }

@@ -29,13 +29,13 @@ impl<S: BcjrState> TurboDecoder<S> {
         self.code
     }
 
-    pub fn decode<I: Interleaver>(
+    pub fn decode<'a, I: Interleaver>(
         &self,
         input: &[TurboSymbol],
-        interleaver: I,
+        interleaver: &'a I,
         first_termination: &[BcjrSymbol],
         second_termination: &[BcjrSymbol],
-    ) -> TurboDecoding<S, I> {
+    ) -> TurboDecoding<'a, S, I> {
         // Prepare input for the first decoder
         let mut first_input = Vec::with_capacity(input.len() + first_termination.len());
         for symbol in input {
@@ -45,7 +45,7 @@ impl<S: BcjrState> TurboDecoder<S> {
 
         // Prepare input for the second decoder
         let mut second_input = Vec::with_capacity(input.len() + second_termination.len());
-        for InterleaverMapping(i, ii) in interleaver {
+        for InterleaverMapping(i, ii) in interleaver.iter() {
             second_input.push(BcjrSymbol::new(
                 input[ii].systematic,
                 input[i].second_parity,
@@ -75,17 +75,17 @@ impl<S: BcjrState> TurboDecoder<S> {
     }
 }
 
-pub struct TurboDecoding<S: BcjrState, I: Interleaver> {
+pub struct TurboDecoding<'a, S: BcjrState, I: Interleaver> {
     first_bcjr: BcjrDecoder<S>,
     second_bcjr: BcjrDecoder<S>,
-    interleaver: I,
+    interleaver: &'a I,
     first_input: Vec<BcjrSymbol>,
     second_input: Vec<BcjrSymbol>,
     bcjr_result: Vec<Llr>,
     input_len: usize,
 }
 
-impl<S, I> TurboDecoding<S, I>
+impl<S, I> TurboDecoding<'_, S, I>
 where
     S: BcjrState,
     I: Interleaver,
@@ -108,7 +108,7 @@ where
         // to be used as the a priori LLR for the second decoder.
         // This is eqn. 28. in Abrantes.
 
-        for InterleaverMapping(i, ii) in self.interleaver {
+        for InterleaverMapping(i, ii) in self.interleaver.iter() {
             let lapp = self.bcjr_result[ii] as isize; // a-posteriori llr
             let la = self.first_input[ii].apriori as isize; // a-priori llr
             let lu = self.first_input[ii].systematic as isize;
@@ -129,7 +129,7 @@ where
         // to be used now as the a-priori LLR for the first decoder.
         // This is eqn. 28. in Abrantes.
 
-        for InterleaverMapping(i, ii) in self.interleaver {
+        for InterleaverMapping(i, ii) in self.interleaver.iter() {
             let lapp = self.bcjr_result[i] as isize; // a-posteriori llr
             let la = self.second_input[i].apriori as isize; // a-priori llr
             let lu = self.second_input[i].systematic as isize;
@@ -189,8 +189,12 @@ mod tests {
         ];
 
         // When
-        let mut decoding =
-            decoder.decode(&input, interleaver, &first_termination, &second_termination);
+        let mut decoding = decoder.decode(
+            &input,
+            &interleaver,
+            &first_termination,
+            &second_termination,
+        );
 
         iteration_results.push(decoding.get_result().to_vec());
 

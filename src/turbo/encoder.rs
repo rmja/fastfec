@@ -39,7 +39,7 @@ impl TurboEncoder {
         Self { code }
     }
 
-    pub fn encode<S, I, W>(&self, source: S, interleaver: I, writer: &mut W)
+    pub fn encode<S, I, W>(&self, source: S, interleaver: &I, writer: &mut W)
     where
         S: BitView,
         I: Interleaver,
@@ -50,7 +50,7 @@ impl TurboEncoder {
         let mut first_encoder = ConvolutionalEncoder::new(self.code.constituent_encoder_code);
         let mut second_encoder = ConvolutionalEncoder::new(self.code.constituent_encoder_code);
 
-        for InterleaverMapping(i, ii) in interleaver {
+        for InterleaverMapping(i, ii) in interleaver.iter() {
             let input = source.get(i);
             let first_output = first_encoder.get_output(input);
             let second_output = second_encoder.get_output(source.get(ii));
@@ -85,12 +85,12 @@ mod tests {
     #[test]
     fn can_encode_from_boolslice() {
         let input = [false; 8].as_ref();
-        
+
         let encoder = TurboEncoder::new(crate::catalog::UMTS);
         let interleaver = QppInterleaver::new(input.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
 
-        encoder.encode(input, interleaver, &mut writer);
+        encoder.encode(input, &interleaver, &mut writer);
     }
 
     #[test]
@@ -101,7 +101,7 @@ mod tests {
         let interleaver = QppInterleaver::new(input.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
 
-        encoder.encode(&input, interleaver, &mut writer);
+        encoder.encode(&input, &interleaver, &mut writer);
     }
 
     #[test]
@@ -114,7 +114,7 @@ mod tests {
         let interleaver = QppInterleaver::new(bitslice.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
 
-        encoder.encode(bitslice, interleaver, &mut writer);
+        encoder.encode(bitslice, &interleaver, &mut writer);
     }
 
     #[test]
@@ -184,7 +184,7 @@ mod tests {
         let mut writer = TurboEncoderOutputWriterStub::new();
 
         // When
-        encoder.encode(&input[..], interleaver, &mut writer);
+        encoder.encode(&input[..], &interleaver, &mut writer);
 
         // Then
         assert_eq!(3 * expected.len() - 6, writer.written_bit_count);
