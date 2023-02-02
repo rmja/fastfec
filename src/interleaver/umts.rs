@@ -232,6 +232,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn can_interleave() {
         // Given
         let interleaver = QppInterleaver::new(16, 1, 4);
@@ -248,6 +249,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn can_deinterleave() {
         // Given
         let interleaver = QppInterleaver::new(16, 1, 4);

@@ -15,5 +15,8 @@ description = """
 Fast implmentations of various forward error correction algorithms optimized for embedded systems.
 """
 
+[features]
+alloc = []
+
 [dependencies]
 bitvec = { version = "1", default-features = false }

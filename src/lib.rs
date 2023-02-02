@@ -3,6 +3,7 @@
 #![feature(portable_simd)]
 #![feature(return_position_impl_trait_in_trait)]
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 mod bitview;
