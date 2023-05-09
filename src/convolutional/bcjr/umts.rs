@@ -1,16 +1,19 @@
-use core::simd::{i8x8, SimdInt, SimdOrd};
+use core::{
+    fmt::Debug,
+    simd::{i8x8, SimdInt, SimdOrd},
+};
 
 use crate::Llr;
 
 use super::{decoder::BcjrState, BcjrDecoder};
 
-pub type UmtsBcjrDecoder<C> = BcjrDecoder<C, UmtsState>;
+pub type UmtsBcjrDecoder<C, const MAX_TRELLIS_BITS: usize> =
+    BcjrDecoder<C, UmtsState, MAX_TRELLIS_BITS>;
 
 #[derive(Clone, Copy)]
 pub union UmtsState {
     value: Value,
     simd: i8x8,
-    #[allow(dead_code)]
     debug: [i8; 8],
 }
 
@@ -23,6 +26,23 @@ struct Value {
 impl Default for UmtsState {
     fn default() -> Self {
         Self::new(0, 0)
+    }
+}
+
+impl Debug for UmtsState {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        unsafe {
+            f.debug_tuple("State")
+                .field(&self.debug[0])
+                .field(&self.debug[1])
+                .field(&self.debug[2])
+                .field(&self.debug[3])
+                .field(&self.debug[4])
+                .field(&self.debug[5])
+                .field(&self.debug[6])
+                .field(&self.debug[7])
+                .finish()
+        }
     }
 }
 
@@ -307,7 +327,7 @@ mod tests {
     #[test]
     fn can_decode_byte() {
         // Given
-        let decoder = UmtsBcjrDecoder::<catalog::UMTS>::new(true);
+        let decoder = UmtsBcjrDecoder::<catalog::UMTS, 11>::new(true);
         let input = [
             BcjrSymbol::new(4, 4),
             BcjrSymbol::new(4, -4),
@@ -333,7 +353,7 @@ mod tests {
     #[test]
     fn can_decode_excel_example_decoder1() {
         // Given
-        let decoder = UmtsBcjrDecoder::<catalog::UMTS>::new(true);
+        let decoder = UmtsBcjrDecoder::<catalog::UMTS, 19>::new(true);
         let input = [
             BcjrSymbol::new(-4, -4),
             BcjrSymbol::new(-4, -4),

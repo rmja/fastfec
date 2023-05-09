@@ -1,6 +1,6 @@
 use crate::Llr;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct BcjrSymbol {
     pub systematic: Llr,
     pub parity: Llr,

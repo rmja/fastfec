@@ -1,4 +1,3 @@
-#[cfg(feature = "alloc")]
 pub mod bcjr;
 mod code;
 mod encoder;

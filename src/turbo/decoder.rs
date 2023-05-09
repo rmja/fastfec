@@ -1,23 +1,35 @@
-use alloc::vec;
-use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 use crate::{
-    convolutional::bcjr::{umts::UmtsState, BcjrDecoder, BcjrState, BcjrSymbol},
+    convolutional::{
+        bcjr::{umts::UmtsState, BcjrDecoder, BcjrState, BcjrSymbol},
+        ConvolutionalCode,
+    },
     interleaver::{Interleaver, InterleaverMapping},
     Llr,
 };
+use heapless::Vec;
 
 use super::{code::assert_consituent_encoder, TurboCode, TurboSymbol};
 
-pub struct TurboDecoder<C: TurboCode, S: BcjrState> {
+pub struct TurboDecoder<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> {
     _code: PhantomData<C>,
     _state: PhantomData<S>,
 }
 
-pub type UmtsTurboDecoder<C> = TurboDecoder<C, UmtsState>;
+pub type UmtsTurboDecoder<C, const MAX_BLOCK_BITS: usize> =
+    TurboDecoder<C, UmtsState, MAX_BLOCK_BITS>;
 
-impl<C: TurboCode, S: BcjrState> TurboDecoder<C, S> {
+impl<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> TurboDecoder<C, S, MAX_BLOCK_BITS> {
+    const MAX_FIRST_TRELLIS_BITS: usize =
+        trellis_bits::<C::ConstituentEncoderCode>(MAX_BLOCK_BITS, C::TERMINATE_FIRST);
+    const MAX_SECOND_TRELLIS_BITS: usize =
+        trellis_bits::<C::ConstituentEncoderCode>(MAX_BLOCK_BITS, C::TERMINATE_SECOND);
+    const MAX_TRELLIS_BITS: usize = trellis_bits::<C::ConstituentEncoderCode>(
+        MAX_BLOCK_BITS,
+        C::TERMINATE_FIRST || C::TERMINATE_SECOND,
+    );
+
     pub fn new() -> Self {
         assert_consituent_encoder::<C>();
         Self {
@@ -32,27 +44,44 @@ impl<C: TurboCode, S: BcjrState> TurboDecoder<C, S> {
         interleaver: &'a I,
         first_termination: &[BcjrSymbol],
         second_termination: &[BcjrSymbol],
-    ) -> TurboDecoding<'a, C, S, I> {
+    ) -> TurboDecoding<
+        'a,
+        C,
+        S,
+        I,
+        MAX_BLOCK_BITS,
+        { Self::MAX_FIRST_TRELLIS_BITS },
+        { Self::MAX_SECOND_TRELLIS_BITS },
+        { Self::MAX_TRELLIS_BITS },
+    > {
         // Prepare input for the first decoder
-        let mut first_input = Vec::with_capacity(input.len() + first_termination.len());
+        let mut first_input = Vec::new();
         for symbol in input {
-            first_input.push(BcjrSymbol::new(symbol.systematic, symbol.first_parity))
+            first_input
+                .push(BcjrSymbol::new(symbol.systematic, symbol.first_parity))
+                .unwrap()
         }
-        first_input.extend_from_slice(first_termination);
+        first_input.extend_from_slice(first_termination).unwrap();
 
         // Prepare input for the second decoder
-        let mut second_input = Vec::with_capacity(input.len() + second_termination.len());
+        let mut second_input = Vec::new();
         for InterleaverMapping(i, ii) in interleaver.iter() {
-            second_input.push(BcjrSymbol::new(
-                input[ii].systematic,
-                input[i].second_parity,
-            ));
+            second_input
+                .push(BcjrSymbol::new(
+                    input[ii].systematic,
+                    input[i].second_parity,
+                ))
+                .unwrap();
         }
-        second_input.extend_from_slice(second_termination);
+        second_input.extend_from_slice(second_termination).unwrap();
 
         // Create a result buffer that the individual decoders can use
-        let bcjr_result =
-            vec![0; input.len() + usize::max(first_termination.len(), second_termination.len())];
+        let mut bcjr_result = Vec::new();
+        bcjr_result
+            .resize_default(
+                input.len() + usize::max(first_termination.len(), second_termination.len()),
+            )
+            .unwrap();
 
         TurboDecoding {
             _code: PhantomData,
@@ -67,24 +96,62 @@ impl<C: TurboCode, S: BcjrState> TurboDecoder<C, S> {
     }
 }
 
-impl<C: TurboCode, S: BcjrState> Default for TurboDecoder<C, S> {
+pub const fn trellis_bits<C: ConvolutionalCode>(block_bits: usize, terminated: bool) -> usize {
+    block_bits
+        + if terminated {
+            C::CONSTRAINT_LENGTH - 1
+        } else {
+            0
+        }
+}
+
+impl<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> Default
+    for TurboDecoder<C, S, MAX_BLOCK_BITS>
+{
     fn default() -> Self {
         TurboDecoder::new()
     }
 }
 
-pub struct TurboDecoding<'a, C: TurboCode, S: BcjrState, I: Interleaver> {
+pub struct TurboDecoding<
+    'a,
+    C: TurboCode,
+    S: BcjrState,
+    I: Interleaver,
+    const MAX_BLOCK_BITS: usize,
+    const MAX_FIRST_TRELLIS_BITS: usize,
+    const MAX_SECOND_TRELLIS_BITS: usize,
+    const MAX_TRELLIS_BITS: usize,
+> {
     _code: PhantomData<C>,
-    first_bcjr: BcjrDecoder<C::ConstituentEncoderCode, S>,
-    second_bcjr: BcjrDecoder<C::ConstituentEncoderCode, S>,
+    first_bcjr: BcjrDecoder<C::ConstituentEncoderCode, S, MAX_TRELLIS_BITS>,
+    second_bcjr: BcjrDecoder<C::ConstituentEncoderCode, S, MAX_TRELLIS_BITS>,
     interleaver: &'a I,
-    first_input: Vec<BcjrSymbol>,
-    second_input: Vec<BcjrSymbol>,
-    bcjr_result: Vec<Llr>,
+    first_input: Vec<BcjrSymbol, MAX_FIRST_TRELLIS_BITS>,
+    second_input: Vec<BcjrSymbol, MAX_SECOND_TRELLIS_BITS>,
+    bcjr_result: Vec<Llr, MAX_TRELLIS_BITS>,
     input_len: usize,
 }
 
-impl<C, S, I> TurboDecoding<'_, C, S, I>
+impl<
+        C,
+        S,
+        I,
+        const MAX_BLOCK_BITS: usize,
+        const MAX_FIRST_TRELLIS_BITS: usize,
+        const MAX_SECOND_TRELLIS_BITS: usize,
+        const MAX_TRELLIS_BITS: usize,
+    >
+    TurboDecoding<
+        '_,
+        C,
+        S,
+        I,
+        MAX_BLOCK_BITS,
+        MAX_FIRST_TRELLIS_BITS,
+        MAX_SECOND_TRELLIS_BITS,
+        MAX_TRELLIS_BITS,
+    >
 where
     C: TurboCode,
     S: BcjrState,
@@ -155,9 +222,9 @@ mod tests {
     #[test]
     fn can_decode_excel_example() {
         // Given
-        let decoder = UmtsTurboDecoder::<catalog::UMTS>::default();
+        let decoder = UmtsTurboDecoder::<catalog::UMTS, 16>::default();
         let interleaver = QppInterleaver::new(16, 1, 4);
-        let mut iteration_results = Vec::new();
+        let mut iteration_results = Vec::<_, 3>::new();
 
         let input = [
             TurboSymbol::new(-4, -4, -4),
@@ -196,11 +263,15 @@ mod tests {
             &second_termination,
         );
 
-        iteration_results.push(decoding.get_result().to_vec());
+        iteration_results
+            .push(decoding.get_result().to_vec())
+            .unwrap();
 
         for _ in 0..2 {
             decoding.run_decode_iteration();
-            iteration_results.push(decoding.get_result().to_vec());
+            iteration_results
+                .push(decoding.get_result().to_vec())
+                .unwrap();
         }
 
         // Then

@@ -1,20 +1,19 @@
-use alloc::vec::Vec;
-use core::marker::PhantomData;
-
 use crate::{
     convolutional::{ConvolutionalCode, ConvolutionalCodeExt},
     Llr,
 };
+use core::{fmt::Debug, marker::PhantomData};
+use heapless::Vec;
 
 use super::BcjrSymbol;
 
-pub struct BcjrDecoder<C: ConvolutionalCode, S: BcjrState> {
+pub struct BcjrDecoder<C: ConvolutionalCode, S: BcjrState, const MAX_TRELLIS_BITS: usize> {
     _code: PhantomData<C>,
     _state: PhantomData<S>,
     pub terminated: bool,
 }
 
-impl<C, S> BcjrDecoder<C, S>
+impl<C, S, const MAX_TRELLIS_BITS: usize> BcjrDecoder<C, S, MAX_TRELLIS_BITS>
 where
     C: ConvolutionalCode,
     S: BcjrState,
@@ -41,8 +40,8 @@ where
     }
 
     /// Compute the inner product of possible transmitted symbols and their received value.
-    fn compute_gamma(&self, input: &[BcjrSymbol]) -> Vec<u32> {
-        let mut gamma = Vec::with_capacity(input.len());
+    fn compute_gamma(&self, input: &[BcjrSymbol]) -> Vec<u32, MAX_TRELLIS_BITS> {
+        let mut gamma = Vec::new();
 
         for symbol in input {
             let BcjrSymbol {
@@ -64,28 +63,28 @@ where
                 | ((g0p1.clamp(i8::MIN as i32, i8::MAX as i32) as u8 as u32) << 8)
                 | ((g1p0.clamp(i8::MIN as i32, i8::MAX as i32) as u8 as u32) << 16)
                 | ((g1p1.clamp(i8::MIN as i32, i8::MAX as i32) as u8 as u32) << 24);
-            gamma.push(g);
+            gamma.push(g).unwrap();
         }
 
         gamma
     }
 
-    fn forward_path(&self, gamma: &[u32]) -> Vec<S> {
-        let mut alpha = Vec::with_capacity(gamma.len());
+    fn forward_path(&self, gamma: &[u32]) -> Vec<S, MAX_TRELLIS_BITS> {
+        let mut alpha = Vec::new();
 
         let symbol_count = gamma.len();
         let mut index = 0;
 
         let mut a = S::default();
         a = a.get_valid_scaled(index, symbol_count);
-        alpha.push(a);
+        alpha.push(a).unwrap();
         index += 1;
 
         while index < C::mem() {
             let g = gamma[index - 1];
             a = a.get_next_alpha(g);
             a = a.get_valid_scaled(index, symbol_count);
-            alpha.push(a);
+            alpha.push(a).unwrap();
             index += 1;
         }
 
@@ -95,7 +94,7 @@ where
                 let g = gamma[index - 1];
                 a = a.get_next_alpha(g);
                 a = a.get_all_scaled();
-                alpha.push(a);
+                alpha.push(a).unwrap();
                 index += 1;
             }
 
@@ -103,7 +102,7 @@ where
                 let g = gamma[index - 1];
                 a = a.get_next_alpha(g);
                 a = a.get_valid_scaled(index, symbol_count);
-                alpha.push(a);
+                alpha.push(a).unwrap();
                 index += 1;
             }
         } else {
@@ -112,7 +111,7 @@ where
                 let g = gamma[index - 1];
                 a = a.get_next_alpha(g);
                 a = a.get_all_scaled();
-                alpha.push(a);
+                alpha.push(a).unwrap();
                 index += 1;
             }
         }
@@ -123,7 +122,12 @@ where
         alpha
     }
 
-    fn backward_path(&self, gamma: Vec<u32>, alpha: Vec<S>, lapp: &mut [Llr]) {
+    fn backward_path(
+        &self,
+        gamma: Vec<u32, MAX_TRELLIS_BITS>,
+        alpha: Vec<S, MAX_TRELLIS_BITS>,
+        lapp: &mut [Llr],
+    ) {
         let symbol_count = gamma.len();
         let mut index = symbol_count;
 
@@ -183,7 +187,7 @@ where
     }
 }
 
-pub trait BcjrState: Default + Copy {
+pub trait BcjrState: Debug + Default + Copy {
     /// Get the unscaled next value of A in the forward path given the current value and `g`.
     fn get_next_alpha(self, g: u32) -> Self;
 
