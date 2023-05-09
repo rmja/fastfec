@@ -232,36 +232,36 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn can_interleave() {
         // Given
         let interleaver = QppInterleaver::new(16, 1, 4);
-        let mut buffer: Vec<i8> = (0..16).collect();
+        let source: Vec<i8> = (0..16).collect();
+        let mut interleaved = [0; 16];
 
         // When
-        interleaver.interleave(&mut buffer);
+        interleaver.interleave(&source, &mut interleaved);
 
         // Then
         assert_eq!(
-            [0, 5, 2, 7, 4, 9, 6, 11, 8, 13, 10, 15, 12, 1, 14, 3].to_vec(),
-            buffer,
+            [0, 5, 2, 7, 4, 9, 6, 11, 8, 13, 10, 15, 12, 1, 14, 3],
+            interleaved,
         );
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn can_deinterleave() {
         // Given
         let interleaver = QppInterleaver::new(16, 1, 4);
-        let mut buffer: Vec<i8> = (0..16).collect();
+        let source: Vec<i8> = (0..16).collect();
+        let mut deinterleaved = [0; 16];
 
         // When
-        interleaver.deinterleave(&mut buffer);
+        interleaver.deinterleave(&source, &mut deinterleaved);
 
         // Then
         assert_eq!(
-            [0, 13, 2, 15, 4, 1, 6, 3, 8, 5, 10, 7, 12, 9, 14, 11].to_vec(),
-            buffer,
+            [0, 13, 2, 15, 4, 1, 6, 3, 8, 5, 10, 7, 12, 9, 14, 11],
+            deinterleaved,
         );
     }
 }

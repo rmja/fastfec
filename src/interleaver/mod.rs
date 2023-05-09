@@ -21,31 +21,23 @@ pub trait Interleaver {
     fn iter(&self) -> impl Iterator<Item = InterleaverMapping>;
 
     /// Interleave a buffer in place
-    #[cfg(feature = "alloc")]
-    fn interleave<T: Copy + Default + Sized>(&self, buffer: &mut [T]) {
-        assert_eq!(self.len(), buffer.len());
-
-        let mut interleaved = alloc::vec![T::default(); buffer.len()];
+    fn interleave<T: Copy + Default + Sized>(&self, source: &[T], interleaved: &mut [T]) {
+        assert_eq!(self.len(), source.len());
+        assert_eq!(self.len(), interleaved.len());
 
         for InterleaverMapping(i, ii) in self.iter() {
-            interleaved[i] = buffer[ii];
+            interleaved[i] = source[ii];
         }
-
-        buffer.copy_from_slice(&interleaved);
     }
 
     /// Deinterleave a buffer in place
-    #[cfg(feature = "alloc")]
-    fn deinterleave<T: Copy + Default + Sized>(&self, buffer: &mut [T]) {
-        assert_eq!(self.len(), buffer.len());
-
-        let mut deinterleaved = alloc::vec![T::default(); buffer.len()];
+    fn deinterleave<T: Copy + Default + Sized>(&self, source: &[T], deinterleaved: &mut [T]) {
+        assert_eq!(self.len(), source.len());
+        assert_eq!(self.len(), deinterleaved.len());
 
         for InterleaverMapping(i, ii) in self.iter() {
-            deinterleaved[ii] = buffer[i];
+            deinterleaved[ii] = source[i];
         }
-
-        buffer.copy_from_slice(&deinterleaved);
     }
 }
 

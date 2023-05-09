@@ -208,8 +208,11 @@ where
         }
 
         // Deinterleave Lapp for decision making
+        let mut deinterleaved_buffer = [0; MAX_BLOCK_BITS];
+        let deinterleaved = &mut deinterleaved_buffer[0..self.input_len];
         self.interleaver
-            .deinterleave(&mut self.bcjr_result[0..self.input_len]);
+            .deinterleave(&self.bcjr_result[0..self.input_len], deinterleaved);
+        self.bcjr_result[0..self.input_len].copy_from_slice(deinterleaved);
     }
 }
 
