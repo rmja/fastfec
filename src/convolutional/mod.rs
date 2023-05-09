@@ -3,7 +3,7 @@ pub mod bcjr;
 mod code;
 mod encoder;
 
-pub use code::ConvolutionalCode;
+pub use code::{ConvolutionalCode, ConvolutionalCodeExt};
 pub use encoder::ConvolutionalEncoder;
 
 /// Concatenated output bits for each generator polynomial.

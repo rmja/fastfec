@@ -8,25 +8,22 @@ use crate::{
     Llr,
 };
 
-use super::{TurboCode, TurboSymbol};
+use super::{code::assert_consituent_encoder, TurboCode, TurboSymbol};
 
-pub struct TurboDecoder<S: BcjrState> {
-    code: TurboCode,
+pub struct TurboDecoder<C: TurboCode, S: BcjrState> {
+    _code: PhantomData<C>,
     _state: PhantomData<S>,
 }
 
-pub type UmtsTurboDecoder = TurboDecoder<UmtsState>;
+pub type UmtsTurboDecoder<C> = TurboDecoder<C, UmtsState>;
 
-impl<S: BcjrState> TurboDecoder<S> {
-    pub const fn new(code: TurboCode) -> Self {
+impl<C: TurboCode, S: BcjrState> TurboDecoder<C, S> {
+    pub fn new() -> Self {
+        assert_consituent_encoder::<C>();
         Self {
-            code,
+            _code: PhantomData,
             _state: PhantomData,
         }
-    }
-
-    pub fn code(&self) -> TurboCode {
-        self.code
     }
 
     pub fn decode<'a, I: Interleaver>(
@@ -35,7 +32,7 @@ impl<S: BcjrState> TurboDecoder<S> {
         interleaver: &'a I,
         first_termination: &[BcjrSymbol],
         second_termination: &[BcjrSymbol],
-    ) -> TurboDecoding<'a, S, I> {
+    ) -> TurboDecoding<'a, C, S, I> {
         // Prepare input for the first decoder
         let mut first_input = Vec::with_capacity(input.len() + first_termination.len());
         for symbol in input {
@@ -58,14 +55,9 @@ impl<S: BcjrState> TurboDecoder<S> {
             vec![0; input.len() + usize::max(first_termination.len(), second_termination.len())];
 
         TurboDecoding {
-            first_bcjr: BcjrDecoder::<S>::new(
-                self.code.constituent_encoder_code,
-                self.code.terminate_first,
-            ),
-            second_bcjr: BcjrDecoder::<S>::new(
-                self.code.constituent_encoder_code,
-                self.code.terminate_second,
-            ),
+            _code: PhantomData,
+            first_bcjr: BcjrDecoder::new(C::TERMINATE_FIRST),
+            second_bcjr: BcjrDecoder::new(C::TERMINATE_SECOND),
             first_input,
             second_input,
             interleaver,
@@ -75,9 +67,16 @@ impl<S: BcjrState> TurboDecoder<S> {
     }
 }
 
-pub struct TurboDecoding<'a, S: BcjrState, I: Interleaver> {
-    first_bcjr: BcjrDecoder<S>,
-    second_bcjr: BcjrDecoder<S>,
+impl<C: TurboCode, S: BcjrState> Default for TurboDecoder<C, S> {
+    fn default() -> Self {
+        TurboDecoder::new()
+    }
+}
+
+pub struct TurboDecoding<'a, C: TurboCode, S: BcjrState, I: Interleaver> {
+    _code: PhantomData<C>,
+    first_bcjr: BcjrDecoder<C::ConstituentEncoderCode, S>,
+    second_bcjr: BcjrDecoder<C::ConstituentEncoderCode, S>,
     interleaver: &'a I,
     first_input: Vec<BcjrSymbol>,
     second_input: Vec<BcjrSymbol>,
@@ -85,8 +84,9 @@ pub struct TurboDecoding<'a, S: BcjrState, I: Interleaver> {
     input_len: usize,
 }
 
-impl<S, I> TurboDecoding<'_, S, I>
+impl<C, S, I> TurboDecoding<'_, C, S, I>
 where
+    C: TurboCode,
     S: BcjrState,
     I: Interleaver,
 {
@@ -148,14 +148,14 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::interleaver::qpp::QppInterleaver;
+    use crate::{catalog, interleaver::qpp::QppInterleaver};
 
     use super::*;
 
     #[test]
     fn can_decode_excel_example() {
         // Given
-        let decoder = UmtsTurboDecoder::new(crate::catalog::UMTS);
+        let decoder = UmtsTurboDecoder::<catalog::UMTS>::default();
         let interleaver = QppInterleaver::new(16, 1, 4);
         let mut iteration_results = Vec::new();
 

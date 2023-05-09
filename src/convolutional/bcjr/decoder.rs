@@ -1,25 +1,29 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use crate::{convolutional::ConvolutionalCode, Llr};
+use crate::{
+    convolutional::{ConvolutionalCode, ConvolutionalCodeExt},
+    Llr,
+};
 
 use super::BcjrSymbol;
 
-pub struct BcjrDecoder<S: BcjrState> {
-    pub code: ConvolutionalCode,
-    pub terminated: bool,
+pub struct BcjrDecoder<C: ConvolutionalCode, S: BcjrState> {
+    _code: PhantomData<C>,
     _state: PhantomData<S>,
+    pub terminated: bool,
 }
 
-impl<S> BcjrDecoder<S>
+impl<C, S> BcjrDecoder<C, S>
 where
+    C: ConvolutionalCode,
     S: BcjrState,
 {
-    pub const fn new(code: ConvolutionalCode, terminated: bool) -> Self {
+    pub const fn new(terminated: bool) -> Self {
         Self {
-            code,
-            terminated,
+            _code: PhantomData,
             _state: PhantomData,
+            terminated,
         }
     }
 
@@ -27,7 +31,7 @@ where
     pub fn decode(&self, input: &[BcjrSymbol], output: &mut [Llr]) {
         assert!(output.len() >= input.len());
         assert!(
-            input.len() >= (1 + self.terminated as usize) * self.code.mem(),
+            input.len() >= (1 + self.terminated as usize) * C::mem(),
             "The input is not long enough to open and possibly close the trellis"
         );
 
@@ -77,7 +81,7 @@ where
         alpha.push(a);
         index += 1;
 
-        while index < self.code.mem() {
+        while index < C::mem() {
             let g = gamma[index - 1];
             a = a.get_next_alpha(g);
             a = a.get_valid_scaled(index, symbol_count);
@@ -87,7 +91,7 @@ where
 
         if self.terminated {
             // Trellis is terminated
-            while index < symbol_count - self.code.mem() {
+            while index < symbol_count - C::mem() {
                 let g = gamma[index - 1];
                 a = a.get_next_alpha(g);
                 a = a.get_all_scaled();
@@ -129,7 +133,7 @@ where
             b = b.get_valid_scaled(index, symbol_count);
             index -= 1;
 
-            while index >= symbol_count - self.code.mem() {
+            while index >= symbol_count - C::mem() {
                 let g = gamma[index];
                 let a = alpha[index];
 
@@ -144,7 +148,7 @@ where
             index -= 1;
         }
 
-        while index >= self.code.mem() {
+        while index >= C::mem() {
             let g = gamma[index];
             let a = alpha[index];
 

@@ -4,7 +4,7 @@ use crate::Llr;
 
 use super::{decoder::BcjrState, BcjrDecoder};
 
-pub type UmtsBcjrDecoder = BcjrDecoder<UmtsState>;
+pub type UmtsBcjrDecoder<C> = BcjrDecoder<C, UmtsState>;
 
 #[derive(Clone, Copy)]
 pub union UmtsState {
@@ -307,7 +307,7 @@ mod tests {
     #[test]
     fn can_decode_byte() {
         // Given
-        let decoder = UmtsBcjrDecoder::new(catalog::UMTS_CONSTITUENT, true);
+        let decoder = UmtsBcjrDecoder::<catalog::UMTS>::new(true);
         let input = [
             BcjrSymbol::new(4, 4),
             BcjrSymbol::new(4, -4),
@@ -333,7 +333,7 @@ mod tests {
     #[test]
     fn can_decode_excel_example_decoder1() {
         // Given
-        let decoder = UmtsBcjrDecoder::new(catalog::UMTS_CONSTITUENT, true);
+        let decoder = UmtsBcjrDecoder::<catalog::UMTS>::new(true);
         let input = [
             BcjrSymbol::new(-4, -4),
             BcjrSymbol::new(-4, -4),

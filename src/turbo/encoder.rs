@@ -1,13 +1,16 @@
+use core::marker::PhantomData;
+
 use crate::{
-    convolutional::{ConvolutionalEncoder, EncoderOutput},
+    convolutional::{ConvolutionalCodeExt, ConvolutionalEncoder, EncoderOutput},
     interleaver::{Interleaver, InterleaverMapping},
+    turbo::code::assert_consituent_encoder,
     BitView,
 };
 
 use super::TurboCode;
 
-pub struct TurboEncoder {
-    code: TurboCode,
+pub struct TurboEncoder<C: TurboCode> {
+    _code: PhantomData<C>,
 }
 
 pub trait TurboEncoderOutputWriter {
@@ -34,9 +37,10 @@ pub trait TurboEncoderOutputWriter {
     fn write_termination_output(&mut self, encoder_index: usize, output: EncoderOutput);
 }
 
-impl TurboEncoder {
-    pub const fn new(code: TurboCode) -> Self {
-        Self { code }
+impl<C: TurboCode> TurboEncoder<C> {
+    pub fn new() -> Self {
+        assert_consituent_encoder::<C>();
+        Self { _code: PhantomData }
     }
 
     pub fn encode<S, I, W>(&self, source: S, interleaver: &I, writer: &mut W)
@@ -47,8 +51,8 @@ impl TurboEncoder {
     {
         assert_eq!(source.len2(), interleaver.len());
 
-        let mut first_encoder = ConvolutionalEncoder::new(self.code.constituent_encoder_code);
-        let mut second_encoder = ConvolutionalEncoder::new(self.code.constituent_encoder_code);
+        let mut first_encoder = ConvolutionalEncoder::<C::ConstituentEncoderCode>::default();
+        let mut second_encoder = ConvolutionalEncoder::<C::ConstituentEncoderCode>::default();
 
         for InterleaverMapping(i, ii) in interleaver.iter() {
             let input = source.get(i);
@@ -59,14 +63,14 @@ impl TurboEncoder {
             writer.write_output(first_output | (second_output & 0x02) << 1);
         }
 
-        if self.code.terminate_first || self.code.terminate_second {
-            for _ in 0..self.code.constituent_encoder_code.mem() {
-                if self.code.terminate_first {
+        if C::TERMINATE_FIRST || C::TERMINATE_SECOND {
+            for _ in 0..C::ConstituentEncoderCode::mem() {
+                if C::TERMINATE_FIRST {
                     let first_output = first_encoder.get_termination_output();
                     writer.write_termination_output(0, first_output);
                 }
 
-                if self.code.terminate_second {
+                if C::TERMINATE_SECOND {
                     let second_output = second_encoder.get_termination_output();
                     writer.write_termination_output(1, second_output);
                 }
@@ -75,9 +79,15 @@ impl TurboEncoder {
     }
 }
 
+impl<C: TurboCode> Default for TurboEncoder<C> {
+    fn default() -> Self {
+        TurboEncoder::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{convolutional::EncoderOutput, interleaver::qpp::QppInterleaver};
+    use crate::{catalog, convolutional::EncoderOutput, interleaver::qpp::QppInterleaver};
 
     use super::*;
     use bitvec::prelude::*;
@@ -86,7 +96,7 @@ mod tests {
     fn can_encode_from_boolslice() {
         let input = [false; 8].as_ref();
 
-        let encoder = TurboEncoder::new(crate::catalog::UMTS);
+        let encoder = TurboEncoder::<catalog::UMTS>::default();
         let interleaver = QppInterleaver::new(input.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
 
@@ -97,7 +107,7 @@ mod tests {
     fn can_encode_from_fixedboolslice() {
         let input = [false; 8];
 
-        let encoder = TurboEncoder::new(crate::catalog::UMTS);
+        let encoder = TurboEncoder::<catalog::UMTS>::default();
         let interleaver = QppInterleaver::new(input.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
 
@@ -110,7 +120,7 @@ mod tests {
         let bitslice = input.view_bits::<Msb0>();
         assert_eq!(8, bitslice.len());
 
-        let encoder = TurboEncoder::new(crate::catalog::UMTS);
+        let encoder = TurboEncoder::<catalog::UMTS>::default();
         let interleaver = QppInterleaver::new(bitslice.len(), 3, 0);
         let mut writer = TurboEncoderOutputWriterStub::new();
 
@@ -179,7 +189,7 @@ mod tests {
     fn can_encode_case(expected: &[EncoderOutput], input: &[u8], f1: u16, f2: u16) {
         // Given
         let input: Vec<bool> = input.into_iter().map(|b| *b == 1).collect();
-        let encoder = TurboEncoder::new(crate::catalog::UMTS);
+        let encoder = TurboEncoder::<catalog::UMTS>::default();
         let interleaver = QppInterleaver::new(input.len(), f1, f2);
         let mut writer = TurboEncoderOutputWriterStub::new();
 

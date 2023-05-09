@@ -1,39 +1,36 @@
-use super::{code::CodeState, ConvolutionalCode, EncoderOutput};
+use core::marker::PhantomData;
 
-pub struct ConvolutionalEncoder {
-    code: ConvolutionalCode,
+use super::{code::CodeState, ConvolutionalCode, ConvolutionalCodeExt, EncoderOutput};
+
+#[derive(Default)]
+pub struct ConvolutionalEncoder<C: ConvolutionalCode> {
+    _code: PhantomData<C>,
     state: CodeState,
 }
 
-impl ConvolutionalEncoder {
-    /// Create an encoder for a given code
-    pub const fn new(code: ConvolutionalCode) -> Self {
-        Self { code, state: 0 }
-    }
-
-    pub const fn code(&self) -> ConvolutionalCode {
-        self.code
-    }
-
+impl<C: ConvolutionalCode> ConvolutionalEncoder<C> {
     /// Get the next encoder output given `input`
     pub fn get_output(&mut self, input: bool) -> EncoderOutput {
-        let output = self.code.get_output(self.state, input);
-        self.state = self.code.get_next_state(self.state, input);
+        let output = C::get_output(self.state, input);
+        self.state = C::get_next_state(self.state, input);
         output
     }
 
     /// Get the next encoder termination
     pub fn get_termination_output(&mut self) -> EncoderOutput {
-        let input = self.code.get_termination_input(self.state);
-        let output = self.code.get_output(self.state, input);
-        self.state = self.code.get_next_state(self.state, input);
+        let input = C::get_termination_input(self.state);
+        let output = C::get_output(self.state, input);
+        self.state = C::get_next_state(self.state, input);
         output
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::convolutional::EncoderOutput;
+    use crate::{
+        catalog,
+        convolutional::{ConvolutionalCodeExt, EncoderOutput},
+    };
 
     use super::ConvolutionalEncoder;
 
@@ -99,7 +96,7 @@ mod tests {
     fn can_encode_umts_case(expected: &[EncoderOutput], input: &[u8]) {
         // Given
         let input: Vec<bool> = input.into_iter().map(|b| *b == 1).collect();
-        let mut encoder = ConvolutionalEncoder::new(crate::catalog::UMTS_CONSTITUENT);
+        let mut encoder = ConvolutionalEncoder::<crate::catalog::UMTS>::default();
 
         let mut output = Vec::new();
 
@@ -108,7 +105,7 @@ mod tests {
             output.push(encoder.get_output(bit));
         }
 
-        for _ in 0..encoder.code().mem() {
+        for _ in 0..catalog::UMTS::mem() {
             output.push(encoder.get_termination_output());
         }
 
