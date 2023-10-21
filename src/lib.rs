@@ -3,7 +3,6 @@
 #![feature(const_trait_impl)]
 #![feature(generic_const_exprs)]
 #![feature(portable_simd)]
-#![feature(return_position_impl_trait_in_trait)]
 
 mod bitview;
 pub mod catalog;
