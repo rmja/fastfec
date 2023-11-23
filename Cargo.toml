@@ -13,4 +13,4 @@ Fast implmentations of various forward error correction algorithms optimized for
 
 [dependencies]
 bitvec = { version = "1", default-features = false }
-heapless = "0.7"
+heapless = "0.8"
