@@ -1,6 +1,6 @@
 use core::{
     fmt::Debug,
-    simd::{i8x8, SimdInt, SimdOrd},
+    simd::{i8x8, prelude::*},
 };
 
 use crate::Llr;
