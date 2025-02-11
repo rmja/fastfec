@@ -12,26 +12,67 @@ use heapless::Vec;
 
 use super::{code::assert_consituent_encoder, TurboCode, TurboSymbol};
 
-pub struct TurboDecoder<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> {
+pub struct TurboDecoder<
+    C: TurboCode,
+    S: BcjrState,
+    const MAX_BLOCK_BITS: usize,
+    const MAX_FIRST_TRELLIS_BITS: usize,
+    const MAX_SECOND_TRELLIS_BITS: usize,
+    const MAX_TRELLIS_BITS: usize,
+> {
     _code: PhantomData<C>,
     _state: PhantomData<S>,
 }
 
-pub type UmtsTurboDecoder<C, const MAX_BLOCK_BITS: usize> =
-    TurboDecoder<C, UmtsState, MAX_BLOCK_BITS>;
+pub type UmtsTurboDecoder<
+    C,
+    const MAX_BLOCK_BITS: usize,
+    const MAX_FIRST_TRELLIS_BITS: usize,
+    const MAX_SECOND_TRELLIS_BITS: usize,
+    const MAX_TRELLIS_BITS: usize,
+> = TurboDecoder<
+    C,
+    UmtsState,
+    MAX_BLOCK_BITS,
+    MAX_FIRST_TRELLIS_BITS,
+    MAX_SECOND_TRELLIS_BITS,
+    MAX_TRELLIS_BITS,
+>;
 
-impl<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> TurboDecoder<C, S, MAX_BLOCK_BITS> {
-    const MAX_FIRST_TRELLIS_BITS: usize =
-        trellis_bits::<C::ConstituentEncoderCode>(MAX_BLOCK_BITS, C::TERMINATE_FIRST);
-    const MAX_SECOND_TRELLIS_BITS: usize =
-        trellis_bits::<C::ConstituentEncoderCode>(MAX_BLOCK_BITS, C::TERMINATE_SECOND);
-    const MAX_TRELLIS_BITS: usize = trellis_bits::<C::ConstituentEncoderCode>(
+impl<
+        C: TurboCode,
+        S: BcjrState,
+        const MAX_BLOCK_BITS: usize,
+        const MAX_FIRST_TRELLIS_BITS: usize,
+        const MAX_SECOND_TRELLIS_BITS: usize,
+        const MAX_TRELLIS_BITS: usize,
+    >
+    TurboDecoder<
+        C,
+        S,
         MAX_BLOCK_BITS,
-        C::TERMINATE_FIRST || C::TERMINATE_SECOND,
-    );
-
+        MAX_FIRST_TRELLIS_BITS,
+        MAX_SECOND_TRELLIS_BITS,
+        MAX_TRELLIS_BITS,
+    >
+{
     pub fn new() -> Self {
         assert_consituent_encoder::<C>();
+        assert_eq!(
+            MAX_FIRST_TRELLIS_BITS,
+            trellis_bits::<C::ConstituentEncoderCode>(MAX_BLOCK_BITS, C::TERMINATE_FIRST)
+        );
+        assert_eq!(
+            MAX_SECOND_TRELLIS_BITS,
+            trellis_bits::<C::ConstituentEncoderCode>(MAX_BLOCK_BITS, C::TERMINATE_SECOND),
+        );
+        assert_eq!(
+            MAX_TRELLIS_BITS,
+            trellis_bits::<C::ConstituentEncoderCode>(
+                MAX_BLOCK_BITS,
+                C::TERMINATE_FIRST || C::TERMINATE_SECOND,
+            )
+        );
         Self {
             _code: PhantomData,
             _state: PhantomData,
@@ -50,9 +91,9 @@ impl<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> TurboDecoder<C, S,
         S,
         I,
         MAX_BLOCK_BITS,
-        { Self::MAX_FIRST_TRELLIS_BITS },
-        { Self::MAX_SECOND_TRELLIS_BITS },
-        { Self::MAX_TRELLIS_BITS },
+        MAX_FIRST_TRELLIS_BITS,
+        MAX_SECOND_TRELLIS_BITS,
+        MAX_TRELLIS_BITS,
     > {
         // Prepare input for the first decoder
         let mut first_input = Vec::new();
@@ -105,8 +146,22 @@ pub const fn trellis_bits<C: ConvolutionalCode>(block_bits: usize, terminated: b
         }
 }
 
-impl<C: TurboCode, S: BcjrState, const MAX_BLOCK_BITS: usize> Default
-    for TurboDecoder<C, S, MAX_BLOCK_BITS>
+impl<
+        C: TurboCode,
+        S: BcjrState,
+        const MAX_BLOCK_BITS: usize,
+        const MAX_FIRST_TRELLIS_BITS: usize,
+        const MAX_SECOND_TRELLIS_BITS: usize,
+        const MAX_TRELLIS_BITS: usize,
+    > Default
+    for TurboDecoder<
+        C,
+        S,
+        MAX_BLOCK_BITS,
+        MAX_FIRST_TRELLIS_BITS,
+        MAX_SECOND_TRELLIS_BITS,
+        MAX_TRELLIS_BITS,
+    >
 {
     fn default() -> Self {
         TurboDecoder::new()
@@ -225,7 +280,7 @@ mod tests {
     #[test]
     fn can_decode_excel_example() {
         // Given
-        let decoder = UmtsTurboDecoder::<catalog::UMTS, 16>::default();
+        let decoder = UmtsTurboDecoder::<catalog::UMTS, 16, 19, 19, 19>::default();
         let interleaver = QppInterleaver::new(16, 1, 4);
         let mut iteration_results = Vec::<_, 3>::new();
 

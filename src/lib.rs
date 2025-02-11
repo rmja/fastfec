@@ -1,7 +1,5 @@
 #![cfg_attr(not(test), no_std)]
-#![allow(incomplete_features)]
 #![feature(const_trait_impl)]
-#![feature(generic_const_exprs)]
 #![feature(portable_simd)]
 
 mod bitview;
