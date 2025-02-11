@@ -6,7 +6,7 @@ authors = ["Rasmus Melchior Jacobsen <rmja@laesoe.org>"]
 repository = "https://github.com/rmja/fastfec"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-keywords = ["fec", "convolutional-code", "turbo-code", "simd"]
+keywords = ["fec", "convolutional-code", "turbo-code", "simd", "no_std"]
 description = """
 Fast implmentations of various forward error correction algorithms optimized for embedded systems.
 """

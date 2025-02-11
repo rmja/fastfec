@@ -30,8 +30,8 @@ impl Interleaver for QppInterleaver {
 
     fn get(&self, i: usize) -> usize {
         let i = u64::try_from(i).unwrap();
-        let f1 = u64::try_from(self.f1).unwrap();
-        let f2 = u64::try_from(self.f2).unwrap();
+        let f1 = u64::from(self.f1);
+        let f2 = u64::from(self.f2);
         let length = u64::try_from(self.length).unwrap();
 
         ((f1 * i + f2 * i * i) % length).try_into().unwrap()
